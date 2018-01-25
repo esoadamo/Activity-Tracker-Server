@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session, redirect, url_for, escape, request
+from flask import Flask, request, Response
 from flask_sqlalchemy import SQLAlchemy
 from os.path import isfile
 import random
@@ -35,19 +35,21 @@ def index():
     return 'WIP'
 
 
-@app.route('/register/', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        if 'username' not in request.form or 'password' not in request.form:
-            return 'User or password not specified', 400
-        if User.query.filter_by(username=request.form['username']).first() is not None:
-            return render_template('register.html', error_msg="User is already registered"), 401
-        db.session.add(User(username=request.form['username'], password=request.form['password']))
+@app.route('/data/<string:username>', methods=['GET', 'POST'])
+def get_or_set_data(username):
+    user = User.query.filter_by(username=username).first()
+    if user is None:
+        user = User(username=username, password='')
+        db.session.add(user)
         db.session.commit()
-        session['username'] = request.form['username']
-        return 'OK'
+    if request.method == 'POST':
+        user.data = request.form['data']
+        db.session.commit()
+        resp = Response('ok')
     else:
-        return 'WIP'
+        resp = Response(user.data)
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    return resp
 
 
 # Initialization part of the script, together with first set-up

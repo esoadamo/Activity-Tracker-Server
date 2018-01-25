@@ -102,3 +102,4 @@ ENV/
 
 # pycharm
 .idea
+.activity-tracker.db
